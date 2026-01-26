@@ -1,8 +1,9 @@
 ﻿using System.Windows;
+using ScottPlot.WPF;
 
 namespace Oscilloscope;
 
-public partial class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     public MainWindow()
     {

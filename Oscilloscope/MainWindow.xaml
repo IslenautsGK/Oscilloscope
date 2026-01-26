@@ -1,14 +1,125 @@
 ﻿<Window
-    x:Class="Oscilloscope.MainWindow"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:Oscilloscope"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-    Title="MainWindow"
-    Width="800"
-    Height="450"
-    mc:Ignorable="d">
-    <sp:WpfPlot x:Name="plot" />
+  x:Class="Oscilloscope.MainWindow"
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:local="clr-namespace:Oscilloscope"
+  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+  xmlns:hc="https://handyorg.github.io/handycontrol"
+  Title="MainWindow"
+  Width="800"
+  Height="450"
+  mc:Ignorable="d"
+>
+  <Window.DataContext>
+    <local:MainViewModel />
+  </Window.DataContext>
+  <Window.Resources>
+    <local:BindingProxy x:Key="DeleteVariableCommand" Data="{Binding DeleteVariableCommand}" />
+  </Window.Resources>
+  <Grid ColumnDefinitions="3*,*">
+    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
+      <sp:WpfPlot x:Name="plot" Margin="10" />
+    </Border>
+    <DockPanel Margin="10" Grid.Column="1">
+      <DockPanel DockPanel.Dock="Top">
+        <ToggleButton
+          DockPanel.Dock="Right"
+          Margin="5,0,0,0"
+          IsChecked="{Binding Connected}"
+          Command="{Binding SwitchConnectCommand}"
+        >
+          <ToggleButton.Style>
+            <Style BasedOn="{StaticResource ToggleButtonPrimary}" TargetType="ToggleButton">
+              <Setter Property="Content">
+                <Setter.Value>
+                  <Path
+                    Fill="{DynamicResource TextIconBrush}"
+                    Stretch="Uniform"
+                    Data="M10,17.55,8.23,19.27a2.47,2.47,0,0,1-3.5-3.5l4.54-4.55a2.46,2.46,0,0,1,3.39-.09l.12.1a1,1,0,0,0,1.4-1.43A2.75,2.75,0,0,0,14,9.59a4.46,4.46,0,0,0-6.09.22L3.31,14.36a4.48,4.48,0,0,0,6.33,6.33L11.37,19A1,1,0,0,0,10,17.55ZM20.69,3.31a4.49,4.49,0,0,0-6.33,0L12.63,5A1,1,0,0,0,14,6.45l1.73-1.72a2.47,2.47,0,0,1,3.5,3.5l-4.54,4.55a2.46,2.46,0,0,1-3.39.09l-.12-.1a1,1,0,0,0-1.4,1.43,2.75,2.75,0,0,0,.23.21,4.47,4.47,0,0,0,6.09-.22l4.55-4.55A4.49,4.49,0,0,0,20.69,3.31Z"
+                  />
+                </Setter.Value>
+              </Setter>
+              <Style.Triggers>
+                <Trigger Property="IsChecked" Value="True">
+                  <Setter Property="Content">
+                    <Setter.Value>
+                      <Path
+                        Fill="{DynamicResource TextIconBrush}"
+                        Stretch="Uniform"
+                        Data="M4.76,10.59a1,1,0,0,0,.26-2L3.26,8.15a1,1,0,1,0-.52,1.93l1.76.47A.78.78,0,0,0,4.76,10.59ZM8.62,5a1,1,0,0,0,1,.74.82.82,0,0,0,.26,0,1,1,0,0,0,.7-1.22l-.47-1.76a1,1,0,1,0-1.93.52Zm4.83,10A1,1,0,0,0,12,15L8.5,18.56a2.21,2.21,0,0,1-3.06,0,2.15,2.15,0,0,1,0-3.06L9,12a1,1,0,1,0-1.41-1.41L4,14.08A4.17,4.17,0,1,0,9.92,20l3.53-3.53A1,1,0,0,0,13.45,15ZM5.18,6.59a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41L5.3,3.89A1,1,0,0,0,3.89,5.3Zm16.08,7.33-1.76-.47A1,1,0,1,0,19,15.38l1.76.47.26,0a1,1,0,0,0,.26-2ZM15.38,19a1,1,0,0,0-1.23-.7,1,1,0,0,0-.7,1.22l.47,1.76a1,1,0,0,0,1,.74,1.15,1.15,0,0,0,.26,0,1,1,0,0,0,.71-1.23Zm3.44-1.57a1,1,0,0,0-1.41,1.41l1.29,1.29a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM21.2,7A4.16,4.16,0,0,0,14.08,4L10.55,7.56A1,1,0,1,0,12,9L15.5,5.44a2.21,2.21,0,0,1,3.06,0,2.15,2.15,0,0,1,0,3.06L15,12a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0L20,9.92A4.19,4.19,0,0,0,21.2,7Z"
+                      />
+                    </Setter.Value>
+                  </Setter>
+                </Trigger>
+              </Style.Triggers>
+            </Style>
+          </ToggleButton.Style>
+        </ToggleButton>
+        <Button
+          DockPanel.Dock="Right"
+          Style="{StaticResource ButtonInfo}"
+          hc:IconElement.Geometry="{StaticResource RotateRightGeometry}"
+          Margin="5,0,0,0"
+          Command="{Binding RefreshSerialPortNamesCommand}"
+        />
+        <ComboBox
+          IsEnabled="{Binding Connected, Converter={StaticResource Boolean2BooleanReConverter}}"
+          ItemsSource="{Binding SerialPortNames}"
+          SelectedItem="{Binding SerialPortName}"
+        />
+      </DockPanel>
+      <Grid ColumnDefinitions="*,5,*,5,*" DockPanel.Dock="Top" Margin="0,5">
+        <Button
+          HorizontalAlignment="Stretch"
+          Style="{StaticResource ButtonSuccess.Small}"
+          hc:IconElement.Geometry="M0.038 888.94v-924.545c2.229-28.184 25.649-50.211 54.214-50.211 9.594 0 18.608 2.485 26.432 6.846l-0.276-0.141 914.869 460.794c17.066 8.179 28.642 25.316 28.642 45.158s-11.576 36.979-28.343 45.028l-0.3 0.13-914.869 460.794c-7.55 4.226-16.567 6.715-26.166 6.715-28.683 0-52.175-22.225-54.194-50.393l-0.010-0.175z"
+          Command="{Binding PlayCommand}"
+        />
+        <Button
+          Grid.Column="2"
+          HorizontalAlignment="Stretch"
+          Style="{StaticResource ButtonWarning.Small}"
+          hc:IconElement.Geometry="M204.823-85.295h-153.598c-28.261 0.022-51.165 22.926-51.187 51.184v921.59c0 28.277 22.912 51.203 51.185 51.225h153.6c28.261-0.022 51.165-22.926 51.187-51.184v-921.59c0-28.277-22.912-51.203-51.185-51.225h-0.002zM716.804-85.295h-153.598c-28.27 0-51.187 22.917-51.187 51.187v0 921.588c0 0.011 0 0.025 0 0.038 0 28.27 22.917 51.187 51.187 51.187h153.598c28.27 0 51.187-22.917 51.187-51.187v0-921.588c0-28.27-22.917-51.187-51.187-51.187v0z"
+          Command="{Binding PauseCommand}"
+        />
+        <Button
+          Grid.Column="4"
+          HorizontalAlignment="Stretch"
+          Style="{StaticResource ButtonDanger.Small}"
+          hc:IconElement.Geometry="M910.251-85.333h-796.416c-62.836 0.024-113.768 50.956-113.792 113.79v796.461c0.049 62.817 50.971 113.725 113.79 113.749h796.461c62.784-0.073 113.658-50.962 113.707-113.745v-796.464c-0.024-62.836-50.956-113.768-113.79-113.792h-0.002z"
+          Command="{Binding StopCommand}"
+        />
+      </Grid>
+      <WrapPanel DockPanel.Dock="Top">
+        <Button />
+        <Button />
+        <Button />
+        <Button />
+      </WrapPanel>
+      <Button
+        DockPanel.Dock="Bottom"
+        HorizontalAlignment="Stretch"
+        Content="添加"
+        Command="{Binding AddVariableCommand}"
+      />
+      <ListBox Margin="0,5" ItemsSource="{Binding Variables}">
+        <ListBox.ItemTemplate>
+          <DataTemplate DataType="local:VariableViewModel">
+            <StackPanel>
+              <Button Content="{Binding Variable.Name, TargetNullValue=选择变量}" />
+              <Button
+                Style="{StaticResource ButtonDanger}"
+                hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
+                Command="{Binding Data, Source={StaticResource DeleteVariableCommand}}"
+                CommandParameter="{Binding}"
+              />
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+    </DockPanel>
+    <GridSplitter Width="9" Background="Transparent" Margin="0,0,-4,0" />
+  </Grid>
 </Window>
