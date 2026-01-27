@@ -1,14 +1,12 @@
-﻿using System.Configuration;
-using System.Data;
-using System.Windows;
+﻿using System.Windows;
+using System.Windows.Threading;
 
-namespace Oscilloscope
+namespace Oscilloscope;
+
+public partial class App : Application
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
-    {
-    }
-
+    private void ApplicationDispatcherUnhandledException(
+        object sender,
+        DispatcherUnhandledExceptionEventArgs e
+    ) => MessageBox.Show($"{e.Exception.Message}\n{e.Exception.StackTrace}");
 }

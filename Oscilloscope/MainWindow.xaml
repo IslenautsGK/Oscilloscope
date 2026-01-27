@@ -5,18 +5,22 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="clr-namespace:Oscilloscope"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+  xmlns:sys="clr-namespace:System;assembly=mscorlib"
   xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
   xmlns:hc="https://handyorg.github.io/handycontrol"
+  d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
   Title="MainWindow"
   Width="800"
   Height="450"
   mc:Ignorable="d"
 >
-  <Window.DataContext>
-    <local:MainViewModel />
-  </Window.DataContext>
   <Window.Resources>
     <local:BindingProxy x:Key="DeleteVariableCommand" Data="{Binding DeleteVariableCommand}" />
+    <local:BindingProxy
+      x:Key="SelectVariableColorCommand"
+      Data="{Binding SelectVariableColorCommand}"
+    />
+    <local:BindingProxy x:Key="SelectVariableCommand" Data="{Binding SelectVariableCommand}" />
   </Window.Resources>
   <Grid ColumnDefinitions="3*,*">
     <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
@@ -24,10 +28,28 @@
     </Border>
     <DockPanel Margin="10" Grid.Column="1">
       <DockPanel DockPanel.Dock="Top">
+        <Button
+          DockPanel.Dock="Right"
+          Width="40"
+          Style="{StaticResource ButtonInfo}"
+          hc:IconElement.Geometry="{StaticResource RotateRightGeometry}"
+          Margin="5,0,0,0"
+          ToolTip="刷新串口"
+          Command="{Binding RefreshSerialPortNamesCommand}"
+        />
+        <ComboBox
+          IsEnabled="{Binding Connected, Converter={StaticResource Boolean2BooleanReConverter}}"
+          ItemsSource="{Binding SerialPortNames}"
+          SelectedItem="{Binding SerialPortName}"
+        />
+      </DockPanel>
+      <DockPanel DockPanel.Dock="Top" Margin="0,5">
         <ToggleButton
           DockPanel.Dock="Right"
+          Width="40"
           Margin="5,0,0,0"
           IsChecked="{Binding Connected}"
+          ToolTip="连接/断开连接"
           Command="{Binding SwitchConnectCommand}"
         >
           <ToggleButton.Style>
@@ -57,38 +79,48 @@
             </Style>
           </ToggleButton.Style>
         </ToggleButton>
-        <Button
-          DockPanel.Dock="Right"
-          Style="{StaticResource ButtonInfo}"
-          hc:IconElement.Geometry="{StaticResource RotateRightGeometry}"
-          Margin="5,0,0,0"
-          Command="{Binding RefreshSerialPortNamesCommand}"
-        />
-        <ComboBox
-          IsEnabled="{Binding Connected, Converter={StaticResource Boolean2BooleanReConverter}}"
-          ItemsSource="{Binding SerialPortNames}"
-          SelectedItem="{Binding SerialPortName}"
-        />
+        <ComboBox IsEditable="True" Text="{Binding BaudRate}" SelectedIndex="4">
+          <sys:Int32>9600</sys:Int32>
+          <sys:Int32>19200</sys:Int32>
+          <sys:Int32>38400</sys:Int32>
+          <sys:Int32>57600</sys:Int32>
+          <sys:Int32>115200</sys:Int32>
+          <sys:Int32>230400</sys:Int32>
+          <sys:Int32>460800</sys:Int32>
+          <sys:Int32>921600</sys:Int32>
+        </ComboBox>
       </DockPanel>
+      <ComboBox DockPanel.Dock="Top" SelectedIndex="0" SelectedItem="{Binding Cycle}">
+        <ComboBox.ItemTemplate>
+          <DataTemplate DataType="sys:Int32">
+            <TextBlock Text="{Binding StringFormat={}{0}ms}" />
+          </DataTemplate>
+        </ComboBox.ItemTemplate>
+        <sys:Int32>2</sys:Int32>
+        <sys:Int32>10</sys:Int32>
+      </ComboBox>
       <Grid ColumnDefinitions="*,5,*,5,*" DockPanel.Dock="Top" Margin="0,5">
         <Button
           HorizontalAlignment="Stretch"
-          Style="{StaticResource ButtonSuccess.Small}"
+          Style="{StaticResource ButtonSuccess}"
           hc:IconElement.Geometry="M0.038 888.94v-924.545c2.229-28.184 25.649-50.211 54.214-50.211 9.594 0 18.608 2.485 26.432 6.846l-0.276-0.141 914.869 460.794c17.066 8.179 28.642 25.316 28.642 45.158s-11.576 36.979-28.343 45.028l-0.3 0.13-914.869 460.794c-7.55 4.226-16.567 6.715-26.166 6.715-28.683 0-52.175-22.225-54.194-50.393l-0.010-0.175z"
+          ToolTip="开始记录"
           Command="{Binding PlayCommand}"
         />
         <Button
           Grid.Column="2"
           HorizontalAlignment="Stretch"
-          Style="{StaticResource ButtonWarning.Small}"
+          Style="{StaticResource ButtonWarning}"
           hc:IconElement.Geometry="M204.823-85.295h-153.598c-28.261 0.022-51.165 22.926-51.187 51.184v921.59c0 28.277 22.912 51.203 51.185 51.225h153.6c28.261-0.022 51.165-22.926 51.187-51.184v-921.59c0-28.277-22.912-51.203-51.185-51.225h-0.002zM716.804-85.295h-153.598c-28.27 0-51.187 22.917-51.187 51.187v0 921.588c0 0.011 0 0.025 0 0.038 0 28.27 22.917 51.187 51.187 51.187h153.598c28.27 0 51.187-22.917 51.187-51.187v0-921.588c0-28.27-22.917-51.187-51.187-51.187v0z"
+          ToolTip="暂停记录"
           Command="{Binding PauseCommand}"
         />
         <Button
           Grid.Column="4"
           HorizontalAlignment="Stretch"
-          Style="{StaticResource ButtonDanger.Small}"
+          Style="{StaticResource ButtonDanger}"
           hc:IconElement.Geometry="M910.251-85.333h-796.416c-62.836 0.024-113.768 50.956-113.792 113.79v796.461c0.049 62.817 50.971 113.725 113.79 113.749h796.461c62.784-0.073 113.658-50.962 113.707-113.745v-796.464c-0.024-62.836-50.956-113.768-113.79-113.792h-0.002z"
+          ToolTip="停止记录"
           Command="{Binding StopCommand}"
         />
       </Grid>
@@ -98,27 +130,72 @@
         <Button />
         <Button />
       </WrapPanel>
-      <Button
-        DockPanel.Dock="Bottom"
-        HorizontalAlignment="Stretch"
-        Content="添加"
-        Command="{Binding AddVariableCommand}"
-      />
-      <ListBox Margin="0,5" ItemsSource="{Binding Variables}">
-        <ListBox.ItemTemplate>
-          <DataTemplate DataType="local:VariableViewModel">
-            <StackPanel>
-              <Button Content="{Binding Variable.Name, TargetNullValue=选择变量}" />
-              <Button
-                Style="{StaticResource ButtonDanger}"
-                hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
-                Command="{Binding Data, Source={StaticResource DeleteVariableCommand}}"
-                CommandParameter="{Binding}"
-              />
-            </StackPanel>
-          </DataTemplate>
-        </ListBox.ItemTemplate>
-      </ListBox>
+      <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,5,*,5,*">
+        <Button
+          Style="{StaticResource ButtonPrimary}"
+          HorizontalAlignment="Stretch"
+          hc:IconElement.Geometry="M20.71,9.29l-6-6a1,1,0,0,0-.32-.21A1.09,1.09,0,0,0,14,3H6A3,3,0,0,0,3,6V18a3,3,0,0,0,3,3H18a3,3,0,0,0,3-3V10A1,1,0,0,0,20.71,9.29ZM9,5h4V7H9Zm6,14H9V16a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1Zm4-1a1,1,0,0,1-1,1H17V16a3,3,0,0,0-3-3H10a3,3,0,0,0-3,3v3H6a1,1,0,0,1-1-1V6A1,1,0,0,1,6,5H7V8A1,1,0,0,0,8,9h6a1,1,0,0,0,1-1V6.41l4,4Z"
+          ToolTip="保存变量"
+          Command="{Binding SaveVariableCommand}"
+        />
+        <Button
+          Grid.Column="2"
+          Style="{StaticResource ButtonInfo}"
+          HorizontalAlignment="Stretch"
+          hc:IconElement.Geometry="M20,8.94a1.31,1.31,0,0,0-.06-.27l0-.09a1.07,1.07,0,0,0-.19-.28h0l-6-6h0a1.07,1.07,0,0,0-.28-.19l-.09,0L13.06,2H7A3,3,0,0,0,4,5V19a3,3,0,0,0,3,3H17a3,3,0,0,0,3-3V9S20,9,20,8.94ZM14,5.41,16.59,8H14ZM18,19a1,1,0,0,1-1,1H7a1,1,0,0,1-1-1V5A1,1,0,0,1,7,4h5V9a1,1,0,0,0,1,1h5Z"
+          ToolTip="加载变量"
+          Command="{Binding OpenVariableCommand}"
+        />
+        <Button
+          Grid.Column="4"
+          Style="{StaticResource ButtonSuccess}"
+          HorizontalAlignment="Stretch"
+          hc:IconElement.Geometry="{StaticResource AddGeometry}"
+          ToolTip="添加变量"
+          Command="{Binding AddVariableCommand}"
+        />
+      </Grid>
+      <Border Margin="0,5" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+        <ScrollViewer>
+          <ItemsControl
+            Margin="5,0,5,5"
+            ItemsSource="{Binding Variables}"
+            HorizontalContentAlignment="Stretch"
+          >
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="local:VariableViewModel">
+                <Grid Margin="0,5,0,0" ColumnDefinitions="*,5,Auto,5,Auto">
+                  <Button
+                    Style="{StaticResource ButtonPrimary}"
+                    Content="{Binding Variable.Name, TargetNullValue=选择变量}"
+                    HorizontalAlignment="Stretch"
+                    ToolTip="选择变量"
+                    Command="{Binding Data, Source={StaticResource SelectVariableCommand}}"
+                    CommandParameter="{Binding}"
+                  />
+                  <Button
+                    Grid.Column="2"
+                    Style="{StaticResource ButtonDashed}"
+                    Foreground="{Binding Color}"
+                    hc:IconElement.Geometry="M7.42,15.54a1,1,0,0,0,0,1.41,1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.41A1,1,0,0,0,7.42,15.54Zm0-8.49a1,1,0,0,0,0,1.41,1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.41A1,1,0,0,0,7.42,7.05Zm4.95,10a1,1,0,1,0,1,1A1,1,0,0,0,12.37,17Zm-6-6a1,1,0,1,0,1,1A1,1,0,0,0,6.37,11Zm6-6a1,1,0,1,0,1,1A1,1,0,0,0,12.37,5Zm3.54,2.05a1,1,0,1,0,1.41,0A1,1,0,0,0,15.91,7.05Zm6.3,0a11,11,0,1,0-7.85,15.74,3.87,3.87,0,0,0,2.5-1.65A4.2,4.2,0,0,0,17.47,18a5.65,5.65,0,0,1-.1-1,5,5,0,0,1,3-4.56,3.84,3.84,0,0,0,2.06-2.25A4,4,0,0,0,22.21,7.08Zm-1.7,2.44a1.9,1.9,0,0,1-1,1.09A7,7,0,0,0,15.37,17a7.3,7.3,0,0,0,.14,1.4,2.16,2.16,0,0,1-.31,1.65,1.79,1.79,0,0,1-1.21.8,8.72,8.72,0,0,1-1.62.15,9,9,0,0,1-9-9.28A9.05,9.05,0,0,1,11.85,3h.51a9,9,0,0,1,8.06,5A2,2,0,0,1,20.51,9.52ZM12.37,11a1,1,0,1,0,1,1A1,1,0,0,0,12.37,11Z"
+                    ToolTip="选择颜色"
+                    Command="{Binding Data, Source={StaticResource SelectVariableColorCommand}}"
+                    CommandParameter="{Binding}"
+                  />
+                  <Button
+                    Grid.Column="4"
+                    Style="{StaticResource ButtonDanger}"
+                    hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
+                    ToolTip="删除变量"
+                    Command="{Binding Data, Source={StaticResource DeleteVariableCommand}}"
+                    CommandParameter="{Binding}"
+                  />
+                </Grid>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+      </Border>
     </DockPanel>
     <GridSplitter Width="9" Background="Transparent" Margin="0,0,-4,0" />
   </Grid>

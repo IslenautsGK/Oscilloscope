@@ -8,5 +8,5 @@ internal sealed partial class VariableViewModel : ObservableObject
     public partial VariableInfo Variable { get; set; }
 
     [ObservableProperty]
-    public partial string Color { get; set; } = "#000000";
+    public required partial string Color { get; set; }
 }
