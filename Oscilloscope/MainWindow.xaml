@@ -3,15 +3,15 @@
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+  xmlns:hc="https://handyorg.github.io/handycontrol"
   xmlns:local="clr-namespace:Oscilloscope"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  xmlns:sys="clr-namespace:System;assembly=mscorlib"
   xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
-  xmlns:hc="https://handyorg.github.io/handycontrol"
-  d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+  xmlns:sys="clr-namespace:System;assembly=mscorlib"
   Title="MainWindow"
   Width="800"
   Height="450"
+  d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
   mc:Ignorable="d"
 >
   <Window.Resources>
@@ -22,20 +22,43 @@
     />
     <local:BindingProxy x:Key="SelectVariableCommand" Data="{Binding SelectVariableCommand}" />
   </Window.Resources>
-  <Grid ColumnDefinitions="3*,*">
-    <Border BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
-      <sp:WpfPlot x:Name="plot" Margin="10" />
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="169*" />
+      <ColumnDefinition Width="231*" />
+    </Grid.ColumnDefinitions>
+    <Border
+      Grid.ColumnSpan="2"
+      Margin="0,0,200,0"
+      BorderBrush="{DynamicResource BorderBrush}"
+      BorderThickness="0,0,1,0"
+    >
+      <hc:SimplePanel Margin="10">
+        <sp:WpfPlot
+          x:Name="plot"
+          MouseEnter="PlotMouseEnter"
+          MouseLeave="PlotMouseLeave"
+          MouseMove="PlotMouseMove"
+        />
+        <TextBlock
+          x:Name="valuePanel"
+          HorizontalAlignment="Left"
+          VerticalAlignment="Top"
+          IsHitTestVisible="False"
+          Visibility="Collapsed"
+        />
+      </hc:SimplePanel>
     </Border>
-    <DockPanel Margin="10" Grid.Column="1">
+    <DockPanel Grid.Column="1" Margin="272,10,10,10">
       <DockPanel DockPanel.Dock="Top">
         <Button
-          DockPanel.Dock="Right"
           Width="40"
-          Style="{StaticResource ButtonInfo}"
-          hc:IconElement.Geometry="{StaticResource RotateRightGeometry}"
           Margin="5,0,0,0"
-          ToolTip="刷新串口"
+          hc:IconElement.Geometry="{StaticResource RotateRightGeometry}"
           Command="{Binding RefreshSerialPortNamesCommand}"
+          DockPanel.Dock="Right"
+          Style="{StaticResource ButtonInfo}"
+          ToolTip="刷新串口"
         />
         <ComboBox
           IsEnabled="{Binding Connected, Converter={StaticResource Boolean2BooleanReConverter}}"
@@ -43,23 +66,23 @@
           SelectedItem="{Binding SerialPortName}"
         />
       </DockPanel>
-      <DockPanel DockPanel.Dock="Top" Margin="0,5">
+      <DockPanel Margin="0,5" DockPanel.Dock="Top">
         <ToggleButton
-          DockPanel.Dock="Right"
           Width="40"
           Margin="5,0,0,0"
+          Command="{Binding SwitchConnectCommand}"
+          DockPanel.Dock="Right"
           IsChecked="{Binding Connected}"
           ToolTip="连接/断开连接"
-          Command="{Binding SwitchConnectCommand}"
         >
           <ToggleButton.Style>
             <Style BasedOn="{StaticResource ToggleButtonPrimary}" TargetType="ToggleButton">
               <Setter Property="Content">
                 <Setter.Value>
                   <Path
+                    Data="M10,17.55,8.23,19.27a2.47,2.47,0,0,1-3.5-3.5l4.54-4.55a2.46,2.46,0,0,1,3.39-.09l.12.1a1,1,0,0,0,1.4-1.43A2.75,2.75,0,0,0,14,9.59a4.46,4.46,0,0,0-6.09.22L3.31,14.36a4.48,4.48,0,0,0,6.33,6.33L11.37,19A1,1,0,0,0,10,17.55ZM20.69,3.31a4.49,4.49,0,0,0-6.33,0L12.63,5A1,1,0,0,0,14,6.45l1.73-1.72a2.47,2.47,0,0,1,3.5,3.5l-4.54,4.55a2.46,2.46,0,0,1-3.39.09l-.12-.1a1,1,0,0,0-1.4,1.43,2.75,2.75,0,0,0,.23.21,4.47,4.47,0,0,0,6.09-.22l4.55-4.55A4.49,4.49,0,0,0,20.69,3.31Z"
                     Fill="{DynamicResource TextIconBrush}"
                     Stretch="Uniform"
-                    Data="M10,17.55,8.23,19.27a2.47,2.47,0,0,1-3.5-3.5l4.54-4.55a2.46,2.46,0,0,1,3.39-.09l.12.1a1,1,0,0,0,1.4-1.43A2.75,2.75,0,0,0,14,9.59a4.46,4.46,0,0,0-6.09.22L3.31,14.36a4.48,4.48,0,0,0,6.33,6.33L11.37,19A1,1,0,0,0,10,17.55ZM20.69,3.31a4.49,4.49,0,0,0-6.33,0L12.63,5A1,1,0,0,0,14,6.45l1.73-1.72a2.47,2.47,0,0,1,3.5,3.5l-4.54,4.55a2.46,2.46,0,0,1-3.39.09l-.12-.1a1,1,0,0,0-1.4,1.43,2.75,2.75,0,0,0,.23.21,4.47,4.47,0,0,0,6.09-.22l4.55-4.55A4.49,4.49,0,0,0,20.69,3.31Z"
                   />
                 </Setter.Value>
               </Setter>
@@ -68,9 +91,9 @@
                   <Setter Property="Content">
                     <Setter.Value>
                       <Path
+                        Data="M4.76,10.59a1,1,0,0,0,.26-2L3.26,8.15a1,1,0,1,0-.52,1.93l1.76.47A.78.78,0,0,0,4.76,10.59ZM8.62,5a1,1,0,0,0,1,.74.82.82,0,0,0,.26,0,1,1,0,0,0,.7-1.22l-.47-1.76a1,1,0,1,0-1.93.52Zm4.83,10A1,1,0,0,0,12,15L8.5,18.56a2.21,2.21,0,0,1-3.06,0,2.15,2.15,0,0,1,0-3.06L9,12a1,1,0,1,0-1.41-1.41L4,14.08A4.17,4.17,0,1,0,9.92,20l3.53-3.53A1,1,0,0,0,13.45,15ZM5.18,6.59a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41L5.3,3.89A1,1,0,0,0,3.89,5.3Zm16.08,7.33-1.76-.47A1,1,0,1,0,19,15.38l1.76.47.26,0a1,1,0,0,0,.26-2ZM15.38,19a1,1,0,0,0-1.23-.7,1,1,0,0,0-.7,1.22l.47,1.76a1,1,0,0,0,1,.74,1.15,1.15,0,0,0,.26,0,1,1,0,0,0,.71-1.23Zm3.44-1.57a1,1,0,0,0-1.41,1.41l1.29,1.29a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM21.2,7A4.16,4.16,0,0,0,14.08,4L10.55,7.56A1,1,0,1,0,12,9L15.5,5.44a2.21,2.21,0,0,1,3.06,0,2.15,2.15,0,0,1,0,3.06L15,12a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0L20,9.92A4.19,4.19,0,0,0,21.2,7Z"
                         Fill="{DynamicResource TextIconBrush}"
                         Stretch="Uniform"
-                        Data="M4.76,10.59a1,1,0,0,0,.26-2L3.26,8.15a1,1,0,1,0-.52,1.93l1.76.47A.78.78,0,0,0,4.76,10.59ZM8.62,5a1,1,0,0,0,1,.74.82.82,0,0,0,.26,0,1,1,0,0,0,.7-1.22l-.47-1.76a1,1,0,1,0-1.93.52Zm4.83,10A1,1,0,0,0,12,15L8.5,18.56a2.21,2.21,0,0,1-3.06,0,2.15,2.15,0,0,1,0-3.06L9,12a1,1,0,1,0-1.41-1.41L4,14.08A4.17,4.17,0,1,0,9.92,20l3.53-3.53A1,1,0,0,0,13.45,15ZM5.18,6.59a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41L5.3,3.89A1,1,0,0,0,3.89,5.3Zm16.08,7.33-1.76-.47A1,1,0,1,0,19,15.38l1.76.47.26,0a1,1,0,0,0,.26-2ZM15.38,19a1,1,0,0,0-1.23-.7,1,1,0,0,0-.7,1.22l.47,1.76a1,1,0,0,0,1,.74,1.15,1.15,0,0,0,.26,0,1,1,0,0,0,.71-1.23Zm3.44-1.57a1,1,0,0,0-1.41,1.41l1.29,1.29a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM21.2,7A4.16,4.16,0,0,0,14.08,4L10.55,7.56A1,1,0,1,0,12,9L15.5,5.44a2.21,2.21,0,0,1,3.06,0,2.15,2.15,0,0,1,0,3.06L15,12a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0L20,9.92A4.19,4.19,0,0,0,21.2,7Z"
                       />
                     </Setter.Value>
                   </Setter>
@@ -79,7 +102,7 @@
             </Style>
           </ToggleButton.Style>
         </ToggleButton>
-        <ComboBox IsEditable="True" Text="{Binding BaudRate}" SelectedIndex="4">
+        <ComboBox IsEditable="True" SelectedIndex="4" Text="{Binding BaudRate}">
           <sys:Int32>9600</sys:Int32>
           <sys:Int32>19200</sys:Int32>
           <sys:Int32>38400</sys:Int32>
@@ -99,29 +122,29 @@
         <sys:Int32>2</sys:Int32>
         <sys:Int32>10</sys:Int32>
       </ComboBox>
-      <Grid ColumnDefinitions="*,5,*,5,*" DockPanel.Dock="Top" Margin="0,5">
+      <Grid Margin="0,5" ColumnDefinitions="*,5,*,5,*" DockPanel.Dock="Top">
         <Button
           HorizontalAlignment="Stretch"
-          Style="{StaticResource ButtonSuccess}"
           hc:IconElement.Geometry="M0.038 888.94v-924.545c2.229-28.184 25.649-50.211 54.214-50.211 9.594 0 18.608 2.485 26.432 6.846l-0.276-0.141 914.869 460.794c17.066 8.179 28.642 25.316 28.642 45.158s-11.576 36.979-28.343 45.028l-0.3 0.13-914.869 460.794c-7.55 4.226-16.567 6.715-26.166 6.715-28.683 0-52.175-22.225-54.194-50.393l-0.010-0.175z"
-          ToolTip="开始记录"
           Command="{Binding PlayCommand}"
+          Style="{StaticResource ButtonSuccess}"
+          ToolTip="开始记录"
         />
         <Button
           Grid.Column="2"
           HorizontalAlignment="Stretch"
-          Style="{StaticResource ButtonWarning}"
           hc:IconElement.Geometry="M204.823-85.295h-153.598c-28.261 0.022-51.165 22.926-51.187 51.184v921.59c0 28.277 22.912 51.203 51.185 51.225h153.6c28.261-0.022 51.165-22.926 51.187-51.184v-921.59c0-28.277-22.912-51.203-51.185-51.225h-0.002zM716.804-85.295h-153.598c-28.27 0-51.187 22.917-51.187 51.187v0 921.588c0 0.011 0 0.025 0 0.038 0 28.27 22.917 51.187 51.187 51.187h153.598c28.27 0 51.187-22.917 51.187-51.187v0-921.588c0-28.27-22.917-51.187-51.187-51.187v0z"
-          ToolTip="暂停记录"
           Command="{Binding PauseCommand}"
+          Style="{StaticResource ButtonWarning}"
+          ToolTip="暂停记录"
         />
         <Button
           Grid.Column="4"
           HorizontalAlignment="Stretch"
-          Style="{StaticResource ButtonDanger}"
           hc:IconElement.Geometry="M910.251-85.333h-796.416c-62.836 0.024-113.768 50.956-113.792 113.79v796.461c0.049 62.817 50.971 113.725 113.79 113.749h796.461c62.784-0.073 113.658-50.962 113.707-113.745v-796.464c-0.024-62.836-50.956-113.768-113.79-113.792h-0.002z"
-          ToolTip="停止记录"
           Command="{Binding StopCommand}"
+          Style="{StaticResource ButtonDanger}"
+          ToolTip="停止记录"
         />
       </Grid>
       <WrapPanel DockPanel.Dock="Top">
@@ -130,65 +153,65 @@
         <Button />
         <Button />
       </WrapPanel>
-      <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,5,*,5,*">
+      <Grid ColumnDefinitions="*,5,*,5,*" DockPanel.Dock="Bottom">
         <Button
-          Style="{StaticResource ButtonPrimary}"
           HorizontalAlignment="Stretch"
           hc:IconElement.Geometry="M20.71,9.29l-6-6a1,1,0,0,0-.32-.21A1.09,1.09,0,0,0,14,3H6A3,3,0,0,0,3,6V18a3,3,0,0,0,3,3H18a3,3,0,0,0,3-3V10A1,1,0,0,0,20.71,9.29ZM9,5h4V7H9Zm6,14H9V16a1,1,0,0,1,1-1h4a1,1,0,0,1,1,1Zm4-1a1,1,0,0,1-1,1H17V16a3,3,0,0,0-3-3H10a3,3,0,0,0-3,3v3H6a1,1,0,0,1-1-1V6A1,1,0,0,1,6,5H7V8A1,1,0,0,0,8,9h6a1,1,0,0,0,1-1V6.41l4,4Z"
-          ToolTip="保存变量"
           Command="{Binding SaveVariableCommand}"
+          Style="{StaticResource ButtonPrimary}"
+          ToolTip="保存变量"
         />
         <Button
           Grid.Column="2"
-          Style="{StaticResource ButtonInfo}"
           HorizontalAlignment="Stretch"
           hc:IconElement.Geometry="M20,8.94a1.31,1.31,0,0,0-.06-.27l0-.09a1.07,1.07,0,0,0-.19-.28h0l-6-6h0a1.07,1.07,0,0,0-.28-.19l-.09,0L13.06,2H7A3,3,0,0,0,4,5V19a3,3,0,0,0,3,3H17a3,3,0,0,0,3-3V9S20,9,20,8.94ZM14,5.41,16.59,8H14ZM18,19a1,1,0,0,1-1,1H7a1,1,0,0,1-1-1V5A1,1,0,0,1,7,4h5V9a1,1,0,0,0,1,1h5Z"
-          ToolTip="加载变量"
           Command="{Binding OpenVariableCommand}"
+          Style="{StaticResource ButtonInfo}"
+          ToolTip="加载变量"
         />
         <Button
           Grid.Column="4"
-          Style="{StaticResource ButtonSuccess}"
           HorizontalAlignment="Stretch"
           hc:IconElement.Geometry="{StaticResource AddGeometry}"
-          ToolTip="添加变量"
           Command="{Binding AddVariableCommand}"
+          Style="{StaticResource ButtonSuccess}"
+          ToolTip="添加变量"
         />
       </Grid>
-      <Border Margin="0,5" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+      <Border Margin="0,5" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
         <ScrollViewer>
           <ItemsControl
             Margin="5,0,5,5"
-            ItemsSource="{Binding Variables}"
             HorizontalContentAlignment="Stretch"
+            ItemsSource="{Binding Variables}"
           >
             <ItemsControl.ItemTemplate>
               <DataTemplate DataType="local:VariableViewModel">
                 <Grid Margin="0,5,0,0" ColumnDefinitions="*,5,Auto,5,Auto">
                   <Button
-                    Style="{StaticResource ButtonPrimary}"
-                    Content="{Binding Variable.Name, TargetNullValue=选择变量}"
                     HorizontalAlignment="Stretch"
-                    ToolTip="选择变量"
                     Command="{Binding Data, Source={StaticResource SelectVariableCommand}}"
                     CommandParameter="{Binding}"
+                    Content="{Binding Variable.Name, TargetNullValue=选择变量}"
+                    Style="{StaticResource ButtonPrimary}"
+                    ToolTip="选择变量"
                   />
                   <Button
                     Grid.Column="2"
-                    Style="{StaticResource ButtonDashed}"
-                    Foreground="{Binding Color}"
                     hc:IconElement.Geometry="M7.42,15.54a1,1,0,0,0,0,1.41,1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.41A1,1,0,0,0,7.42,15.54Zm0-8.49a1,1,0,0,0,0,1.41,1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.41A1,1,0,0,0,7.42,7.05Zm4.95,10a1,1,0,1,0,1,1A1,1,0,0,0,12.37,17Zm-6-6a1,1,0,1,0,1,1A1,1,0,0,0,6.37,11Zm6-6a1,1,0,1,0,1,1A1,1,0,0,0,12.37,5Zm3.54,2.05a1,1,0,1,0,1.41,0A1,1,0,0,0,15.91,7.05Zm6.3,0a11,11,0,1,0-7.85,15.74,3.87,3.87,0,0,0,2.5-1.65A4.2,4.2,0,0,0,17.47,18a5.65,5.65,0,0,1-.1-1,5,5,0,0,1,3-4.56,3.84,3.84,0,0,0,2.06-2.25A4,4,0,0,0,22.21,7.08Zm-1.7,2.44a1.9,1.9,0,0,1-1,1.09A7,7,0,0,0,15.37,17a7.3,7.3,0,0,0,.14,1.4,2.16,2.16,0,0,1-.31,1.65,1.79,1.79,0,0,1-1.21.8,8.72,8.72,0,0,1-1.62.15,9,9,0,0,1-9-9.28A9.05,9.05,0,0,1,11.85,3h.51a9,9,0,0,1,8.06,5A2,2,0,0,1,20.51,9.52ZM12.37,11a1,1,0,1,0,1,1A1,1,0,0,0,12.37,11Z"
-                    ToolTip="选择颜色"
                     Command="{Binding Data, Source={StaticResource SelectVariableColorCommand}}"
                     CommandParameter="{Binding}"
+                    Foreground="{Binding Color}"
+                    Style="{StaticResource ButtonDashed}"
+                    ToolTip="选择颜色"
                   />
                   <Button
                     Grid.Column="4"
-                    Style="{StaticResource ButtonDanger}"
                     hc:IconElement.Geometry="{StaticResource DeleteGeometry}"
-                    ToolTip="删除变量"
                     Command="{Binding Data, Source={StaticResource DeleteVariableCommand}}"
                     CommandParameter="{Binding}"
+                    Style="{StaticResource ButtonDanger}"
+                    ToolTip="删除变量"
                   />
                 </Grid>
               </DataTemplate>
@@ -197,6 +220,12 @@
         </ScrollViewer>
       </Border>
     </DockPanel>
-    <GridSplitter Width="9" Background="Transparent" Margin="0,0,-4,0" />
+    <GridSplitter
+      Grid.Column="1"
+      Width="9"
+      Margin="257,0,0,0"
+      HorizontalAlignment="Left"
+      Background="Transparent"
+    />
   </Grid>
 </Window>

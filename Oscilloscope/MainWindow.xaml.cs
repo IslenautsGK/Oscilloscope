@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Windows;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using HandyControl.Tools.Extension;
 using Microsoft.Win32;
@@ -30,6 +31,18 @@ public sealed partial class MainWindow
         InitializeComponent();
         vm.ReceiveData += ReceiveData;
         WeakReferenceMessenger.Default.RegisterAll(this);
+    }
+
+    private void PlotMouseEnter(object sender, MouseEventArgs e) =>
+        valuePanel.Visibility = Visibility.Visible;
+
+    private void PlotMouseLeave(object? sender, MouseEventArgs e) =>
+        valuePanel.Visibility = Visibility.Collapsed;
+
+    private void PlotMouseMove(object? sender, MouseEventArgs e)
+    {
+        var c = plot.Plot.GetCoordinates(plot.GetPlotPixelPosition(e));
+        valuePanel.Text = c.ToString();
     }
 
     private void ReceiveData(double[] data)
@@ -96,6 +109,7 @@ public sealed partial class MainWindow
                             color = "FF" + color;
                         var streamer = new OscilloscopeStreamer
                         {
+                            LegendText = variable.Variable.Name ?? "",
                             LineColor = uint.TryParse(
                                 color,
                                 NumberStyles.HexNumber,
