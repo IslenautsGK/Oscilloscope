@@ -8,7 +8,7 @@
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
   xmlns:sys="clr-namespace:System;assembly=mscorlib"
-  Title="MainWindow"
+  Title="示波器"
   Width="800"
   Height="450"
   d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
