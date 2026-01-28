@@ -14,7 +14,9 @@ public sealed partial class MainWindow
         IRecipient<SaveFileMessage>,
         IRecipient<OpenFileMessage>,
         IRecipient<VariableColorMessage>,
-        IRecipient<OscilloscopeMessage>
+        IRecipient<OscilloscopeMessage>,
+        IRecipient<RequestDataMessage>,
+        IRecipient<LoadDataMessage>
 {
     private readonly MainViewModel vm;
 
@@ -29,20 +31,30 @@ public sealed partial class MainWindow
         vm = new();
         DataContext = vm;
         InitializeComponent();
+        plot.Menu = new OscilloscopeMenu(plot, vm);
         vm.ReceiveData += ReceiveData;
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
-    private void PlotMouseEnter(object sender, MouseEventArgs e) =>
-        valuePanel.Visibility = Visibility.Visible;
+    public void Autoscale(Plot plot)
+    {
+        plot.Axes.AutoScale();
+        this.plot.Refresh();
+    }
+
+    private void PlotMouseEnter(object? sender, MouseEventArgs e) =>
+        variablePanel.Visibility = Visibility.Visible;
 
     private void PlotMouseLeave(object? sender, MouseEventArgs e) =>
-        valuePanel.Visibility = Visibility.Collapsed;
+        variablePanel.Visibility = Visibility.Collapsed;
 
     private void PlotMouseMove(object? sender, MouseEventArgs e)
     {
-        var c = plot.Plot.GetCoordinates(plot.GetPlotPixelPosition(e));
-        valuePanel.Text = c.ToString();
+        var index = (int)
+            Math.Round(plot.Plot.GetCoordinates(plot.GetPlotPixelPosition(e)).X * 1000 / vm.Cycle);
+        vm.CurTime = index * vm.Cycle / 1000.0;
+        foreach (var streamer in streamers)
+            streamer.UpdateValueByIndex(index);
     }
 
     private void ReceiveData(double[] data)
@@ -98,31 +110,7 @@ public sealed partial class MainWindow
                 if (clear)
                 {
                     clear = false;
-                    streamers.Clear();
-                    plot.Plot.Clear();
-                    foreach (var variable in vm.Variables)
-                    {
-                        var color = variable.Color;
-                        if (color.StartsWith('#'))
-                            color = color[1..];
-                        if (color.Length == 6)
-                            color = "FF" + color;
-                        var streamer = new OscilloscopeStreamer
-                        {
-                            LegendText = variable.Variable.Name ?? "",
-                            LineColor = uint.TryParse(
-                                color,
-                                NumberStyles.HexNumber,
-                                null,
-                                out var argb
-                            )
-                                ? Color.FromARGB(argb)
-                                : Colors.Black,
-                            Cycle = vm.Cycle,
-                        };
-                        streamers.Add(streamer);
-                        plot.Plot.PlottableList.Add(streamer);
-                    }
+                    CreateStreamer();
                 }
                 else
                 {
@@ -137,5 +125,73 @@ public sealed partial class MainWindow
             default:
                 break;
         }
+    }
+
+    private void CreateStreamer()
+    {
+        streamers.Clear();
+        plot.Plot.Clear();
+        foreach (var variable in vm.Variables)
+        {
+            var color = variable.Color;
+            if (color.StartsWith('#'))
+                color = color[1..];
+            if (color.Length == 6)
+                color = "FF" + color;
+            var streamer = new OscilloscopeStreamer
+            {
+                LegendText = variable.Variable.Name ?? "",
+                LineColor = uint.TryParse(color, NumberStyles.HexNumber, null, out var argb)
+                    ? Color.FromARGB(argb)
+                    : Colors.Black,
+                Cycle = vm.Cycle,
+                UpdateCurValue = v => variable.CurValue = v,
+            };
+            streamers.Add(streamer);
+            plot.Plot.PlottableList.Add(streamer);
+        }
+        plot.Plot.HideLegend();
+    }
+
+    void IRecipient<RequestDataMessage>.Receive(RequestDataMessage message) =>
+        message.Reply(GetData());
+
+    private IEnumerable<Dictionary<string, double>> GetData()
+    {
+        var index = 0;
+        while (true)
+        {
+            var hasData = false;
+            var dictionary = new Dictionary<string, double>
+            {
+                ["时间"] = index * vm.Cycle / 1000.0,
+            };
+            foreach (var streamer in streamers)
+            {
+                if (streamer.FillData(dictionary, index))
+                    hasData = true;
+            }
+            index++;
+            if (!hasData)
+                yield break;
+            yield return dictionary;
+        }
+    }
+
+    void IRecipient<LoadDataMessage>.Receive(LoadDataMessage message)
+    {
+        CreateStreamer();
+        foreach (var data in message.Datas.OfType<IDictionary<string, object?>>())
+        {
+            foreach (var streamer in streamers)
+            {
+                if (data.TryGetValue(streamer.LegendText, out var value) && value is double d)
+                    streamer.Add(d);
+            }
+        }
+        foreach (var streamer in streamers)
+            streamer.ManageAxisLimits = false;
+        plot.Plot.Axes.AutoScale();
+        plot.Refresh();
     }
 }

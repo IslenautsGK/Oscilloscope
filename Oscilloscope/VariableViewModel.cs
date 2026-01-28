@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Oscilloscope;
 
@@ -9,4 +10,8 @@ internal sealed partial class VariableViewModel : ObservableObject
 
     [ObservableProperty]
     public required partial string Color { get; set; }
+
+    [JsonIgnore]
+    [ObservableProperty]
+    public partial double? CurValue { get; set; }
 }

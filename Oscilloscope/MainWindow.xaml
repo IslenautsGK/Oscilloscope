@@ -22,34 +22,63 @@
     />
     <local:BindingProxy x:Key="SelectVariableCommand" Data="{Binding SelectVariableCommand}" />
   </Window.Resources>
-  <Grid>
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="169*" />
-      <ColumnDefinition Width="231*" />
-    </Grid.ColumnDefinitions>
-    <Border
-      Grid.ColumnSpan="2"
-      Margin="0,0,200,0"
-      BorderBrush="{DynamicResource BorderBrush}"
-      BorderThickness="0,0,1,0"
-    >
+  <Grid ColumnDefinitions="3*,*">
+    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
       <hc:SimplePanel Margin="10">
         <sp:WpfPlot
           x:Name="plot"
+          Menu="{x:Null}"
           MouseEnter="PlotMouseEnter"
           MouseLeave="PlotMouseLeave"
           MouseMove="PlotMouseMove"
         />
-        <TextBlock
-          x:Name="valuePanel"
-          HorizontalAlignment="Left"
+        <Border
+          x:Name="variablePanel"
+          HorizontalAlignment="Right"
           VerticalAlignment="Top"
-          IsHitTestVisible="False"
           Visibility="Collapsed"
-        />
+          d:Visibility="Visible"
+          IsHitTestVisible="False"
+          BorderThickness="1"
+          Padding="10"
+          Margin="20"
+          BorderBrush="{DynamicResource BorderBrush}"
+          CornerRadius="8"
+          Background="{DynamicResource RegionBrush}"
+        >
+          <StackPanel>
+            <TextBlock Text="{Binding CurTime, StringFormat=时间：{0} s}" />
+            <ItemsControl ItemsSource="{Binding Variables}" Grid.IsSharedSizeScope="True">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="local:VariableViewModel">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition SharedSizeGroup="Color" />
+                      <ColumnDefinition Width="10" />
+                      <ColumnDefinition SharedSizeGroup="Name" />
+                      <ColumnDefinition Width="10" />
+                      <ColumnDefinition SharedSizeGroup="Value" />
+                    </Grid.ColumnDefinitions>
+                    <Ellipse
+                      VerticalAlignment="Center"
+                      Width="5"
+                      Height="5"
+                      Fill="{Binding Color}"
+                    />
+                    <TextBlock
+                      Grid.Column="2"
+                      Text="{Binding Variable.Name, TargetNullValue=选择变量}"
+                    />
+                    <TextBlock Grid.Column="4" Text="{Binding CurValue, TargetNullValue=null}" />
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+        </Border>
       </hc:SimplePanel>
     </Border>
-    <DockPanel Grid.Column="1" Margin="272,10,10,10">
+    <DockPanel Grid.Column="1" Margin="10">
       <DockPanel DockPanel.Dock="Top">
         <Button
           Width="40"
@@ -102,7 +131,12 @@
             </Style>
           </ToggleButton.Style>
         </ToggleButton>
-        <ComboBox IsEditable="True" SelectedIndex="4" Text="{Binding BaudRate}">
+        <ComboBox
+          IsEditable="True"
+          SelectedIndex="4"
+          Text="{Binding BaudRate}"
+          IsEnabled="{Binding Connected, Converter={StaticResource Boolean2BooleanReConverter}}"
+        >
           <sys:Int32>9600</sys:Int32>
           <sys:Int32>19200</sys:Int32>
           <sys:Int32>38400</sys:Int32>
@@ -113,7 +147,12 @@
           <sys:Int32>921600</sys:Int32>
         </ComboBox>
       </DockPanel>
-      <ComboBox DockPanel.Dock="Top" SelectedIndex="0" SelectedItem="{Binding Cycle}">
+      <ComboBox
+        DockPanel.Dock="Top"
+        SelectedIndex="0"
+        SelectedItem="{Binding Cycle}"
+        IsEnabled="{Binding Status, Converter={x:Static local:StopToTrueConverter.Instance}}"
+      >
         <ComboBox.ItemTemplate>
           <DataTemplate DataType="sys:Int32">
             <TextBlock Text="{Binding StringFormat={}{0}ms}" />
@@ -220,12 +259,6 @@
         </ScrollViewer>
       </Border>
     </DockPanel>
-    <GridSplitter
-      Grid.Column="1"
-      Width="9"
-      Margin="257,0,0,0"
-      HorizontalAlignment="Left"
-      Background="Transparent"
-    />
+    <GridSplitter Width="9" Margin="0,0,-4,0" Background="Transparent" />
   </Grid>
 </Window>

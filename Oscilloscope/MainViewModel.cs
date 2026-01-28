@@ -7,6 +7,8 @@ using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using MiniExcelLibs;
+using MiniExcelLibs.OpenXml;
 
 namespace Oscilloscope;
 
@@ -25,6 +27,13 @@ internal sealed partial class MainViewModel : ObservableObject
         "#FFBCBD22",
         "#FF17BECF",
     ];
+
+    private static readonly OpenXmlConfiguration ExcelConfig = new()
+    {
+        TableStyles = TableStyles.None,
+        AutoFilter = false,
+        FastMode = true,
+    };
 
     [ObservableProperty]
     public partial string[] SerialPortNames { get; set; } = SerialPort.GetPortNames();
@@ -55,12 +64,19 @@ internal sealed partial class MainViewModel : ObservableObject
         nameof(PlayCommand),
         nameof(PauseCommand),
         nameof(StopCommand),
+        nameof(SaveVariableCommand),
+        nameof(OpenVariableCommand),
         nameof(AddVariableCommand),
         nameof(DeleteVariableCommand),
         nameof(SelectVariableCommand),
-        nameof(SelectVariableColorCommand)
+        nameof(SelectVariableColorCommand),
+        nameof(SaveToExcelCommand),
+        nameof(LoadFromExcelCommand)
     )]
     public partial OscilloscopeStatus Status { get; set; }
+
+    [ObservableProperty]
+    public partial double CurTime { get; set; }
 
     public ObservableCollection<VariableViewModel> Variables { get; } =
     [new() { Color = "#FF1F77B4" }];
@@ -270,4 +286,46 @@ internal sealed partial class MainViewModel : ObservableObject
         vm.Color = await WeakReferenceMessenger.Default.Send(new VariableColorMessage(vm.Color));
 
     private bool VariableCanExecute() => Status == OscilloscopeStatus.Stop;
+
+    [RelayCommand(CanExecute = nameof(SaveToExcelCanExecute))]
+    private async Task SaveToExcelAsync()
+    {
+        var fileName = WeakReferenceMessenger.Default.Send(
+            new SaveFileMessage("保存数据", "data.xlsx", "Excel|*.xlsx")
+        );
+        if (fileName.Response is null)
+            return;
+        File.Delete(fileName.Response);
+        var data = WeakReferenceMessenger.Default.Send(new RequestDataMessage());
+        await MiniExcel.SaveAsAsync(
+            fileName.Response,
+            data.Response,
+            sheetName: "数据",
+            configuration: ExcelConfig
+        );
+        await MiniExcel.InsertAsync(
+            fileName.Response,
+            Variables.Select(VariableMap.ToExcel),
+            sheetName: "变量",
+            configuration: ExcelConfig
+        );
+    }
+
+    private bool SaveToExcelCanExecute() => Status != OscilloscopeStatus.Play;
+
+    [RelayCommand(CanExecute = nameof(VariableCanExecute))]
+    private async Task LoadFromExcelAsync()
+    {
+        var message = WeakReferenceMessenger.Default.Send(
+            new OpenFileMessage("加载数据", "Excel|*.xlsx")
+        );
+        if (message.Response is null || !File.Exists(message.Response))
+            return;
+        var variables = await MiniExcel.QueryAsync<ExcelVariable>(message.Response, "变量");
+        Variables.Clear();
+        foreach (var variable in variables)
+            Variables.Add(variable.ToViewModel());
+        var datas = await MiniExcel.QueryAsync(message.Response, true, "数据");
+        WeakReferenceMessenger.Default.Send(new LoadDataMessage(datas));
+    }
 }

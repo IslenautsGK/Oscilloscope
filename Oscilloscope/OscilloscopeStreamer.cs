@@ -40,6 +40,8 @@ internal sealed class OscilloscopeStreamer
 
     public int Cycle { get; set; } = 2;
 
+    public Action<double?>? UpdateCurValue { private get; set; }
+
     private double MaxX => (ys.Count - 1) * Cycle / 1000.0;
 
     private readonly List<double> ys = [];
@@ -89,5 +91,21 @@ internal sealed class OscilloscopeStreamer
             step = (max - min) / 100;
         for (var i = min; i < max; i += step)
             yield return Axes.GetPixel(new(i * Cycle / 1000.0, ys[i]));
+    }
+
+    public void UpdateValueByIndex(int index)
+    {
+        if (index >= 0 && index < ys.Count)
+            UpdateCurValue?.Invoke(ys[index]);
+        else
+            UpdateCurValue?.Invoke(null);
+    }
+
+    public bool FillData(Dictionary<string, double> dictionary, int index)
+    {
+        if (index < 0 || index >= ys.Count)
+            return false;
+        dictionary[LegendText] = ys[index];
+        return true;
     }
 }

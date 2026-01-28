@@ -1,4 +1,6 @@
-﻿namespace Oscilloscope;
+﻿using System.Text.Json.Serialization;
+
+namespace Oscilloscope;
 
 internal readonly record struct VariableInfo(
     string? Name,
@@ -9,6 +11,7 @@ internal readonly record struct VariableInfo(
     int BitSize
 )
 {
+    [JsonIgnore]
     public int Size =>
         TypeCode switch
         {
