@@ -35,6 +35,8 @@ internal sealed partial class MainViewModel : ObservableObject
         FastMode = true,
     };
 
+    private static readonly byte[] stopBytes = [1, 24, 0, 42];
+
     [ObservableProperty]
     public partial string[] SerialPortNames { get; set; } = SerialPort.GetPortNames();
 
@@ -51,7 +53,8 @@ internal sealed partial class MainViewModel : ObservableObject
         nameof(RefreshSerialPortNamesCommand),
         nameof(PlayCommand),
         nameof(PauseCommand),
-        nameof(StopCommand)
+        nameof(StopCommand),
+        nameof(RunUserCommandCommand)
     )]
     public partial bool Connected { get; set; }
 
@@ -64,6 +67,7 @@ internal sealed partial class MainViewModel : ObservableObject
         nameof(PlayCommand),
         nameof(PauseCommand),
         nameof(StopCommand),
+        nameof(RunUserCommandCommand),
         nameof(SaveVariableCommand),
         nameof(OpenVariableCommand),
         nameof(AddVariableCommand),
@@ -78,10 +82,15 @@ internal sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial double CurTime { get; set; }
 
+    [ObservableProperty]
+    public partial IEnumerable<UserCommand> UserCommands { get; set; }
+
     public ObservableCollection<VariableViewModel> Variables { get; } =
     [new() { Color = "#FF1F77B4" }];
 
     public event Action<double[]>? ReceiveData;
+
+    private AppStatusRecord? appStatusRecord;
 
     private SerialPort? port;
 
@@ -91,10 +100,39 @@ internal sealed partial class MainViewModel : ObservableObject
 
     private Task? readTask;
 
+    private ModbusProtocol? protocol;
+
     private Memory<byte> memory = Memory<byte>.Empty;
 
     partial void OnStatusChanged(OscilloscopeStatus value) =>
         WeakReferenceMessenger.Default.Send(new OscilloscopeMessage(value));
+
+    [RelayCommand]
+    private async Task LoadAppStatusAsync()
+    {
+        if (File.Exists("app_status.json"))
+        {
+            await using var stream = File.OpenRead("app_status.json");
+            appStatusRecord = await JsonSerializer.DeserializeAsync<AppStatusRecord>(stream);
+            appStatusRecord?.ToViewModel(this);
+        }
+        if (File.Exists("user_commands.json"))
+        {
+            await using var stream = File.OpenRead("user_commands.json");
+            UserCommands =
+                await JsonSerializer.DeserializeAsync<IEnumerable<UserCommand>>(stream) ?? [];
+        }
+    }
+
+    public async Task SaveAppStatusAsync()
+    {
+        var record = this.ToRecord();
+        if (record == appStatusRecord)
+            return;
+        File.Delete("app_status.json");
+        await using var stream = File.OpenWrite("app_status.json");
+        await JsonSerializer.SerializeAsync(stream, this.ToRecord());
+    }
 
     [RelayCommand(CanExecute = nameof(RefreshSerialPortNamesCanExecute))]
     private void RefreshSerialPortNames() => SerialPortNames = SerialPort.GetPortNames();
@@ -111,7 +149,12 @@ internal sealed partial class MainViewModel : ObservableObject
             {
                 port.Open();
             }
-            catch { }
+            catch
+            {
+                port.Dispose();
+                Connected = false;
+                throw;
+            }
             if (!port.IsOpen)
             {
                 port.Dispose();
@@ -125,13 +168,17 @@ internal sealed partial class MainViewModel : ObservableObject
         }
         else
         {
-            if (port is not null)
+            if (port is { IsOpen: true })
             {
                 try
                 {
                     port.Close();
                 }
-                catch { }
+                catch
+                {
+                    Connected = port.IsOpen;
+                    throw;
+                }
                 port.Dispose();
             }
             if (copyTask is not null)
@@ -148,22 +195,38 @@ internal sealed partial class MainViewModel : ObservableObject
         while (!result.IsCompleted)
         {
             result = await reader.ReadAsync();
-            if (Status != OscilloscopeStatus.Play || memory.Length == 0)
-            {
-                reader.AdvanceTo(result.Buffer.End);
-                continue;
-            }
             var buffer = result.Buffer;
-            if (buffer.Length >= memory.Length)
+            if (Status != OscilloscopeStatus.Play)
             {
-                var frame = buffer.Slice(0, memory.Length);
-                frame.CopyTo(memory.Span);
-                ReceiveData?.Invoke(ReadSpan(memory.Span));
-                reader.AdvanceTo(frame.End);
+                if (this.protocol is { } protocol)
+                {
+                    if (protocol.HandleData(buffer))
+                        reader.AdvanceTo(buffer.GetPosition(protocol.Length));
+                    else
+                        reader.AdvanceTo(buffer.Start, buffer.End);
+                }
+                else
+                {
+                    reader.AdvanceTo(buffer.End);
+                }
+            }
+            else if (memory.Length == 0)
+            {
+                reader.AdvanceTo(buffer.End);
             }
             else
             {
-                reader.AdvanceTo(buffer.Start, buffer.End);
+                if (buffer.Length >= memory.Length)
+                {
+                    var frame = buffer.Slice(0, memory.Length);
+                    frame.CopyTo(memory.Span);
+                    ReceiveData?.Invoke(ReadSpan(memory.Span));
+                    reader.AdvanceTo(frame.End);
+                }
+                else
+                {
+                    reader.AdvanceTo(buffer.Start, buffer.End);
+                }
             }
         }
     }
@@ -171,6 +234,11 @@ internal sealed partial class MainViewModel : ObservableObject
     private double[] ReadSpan(ReadOnlySpan<byte> span)
     {
         var results = new double[Variables.Count];
+        if (!ModbusCRC16.VerifyCRC(span))
+        {
+            Array.Fill(results, double.NaN);
+            return results;
+        }
         for (var i = 0; i < results.Length; i++)
         {
             results[i] = Variables[i].Variable.TypeCode switch
@@ -201,8 +269,18 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         if (port is null)
             return;
-        memory = new Memory<byte>(new byte[Variables.Sum(v => v.Variable.Size)]);
-        var bytes = new byte[10];
+        memory = new Memory<byte>(new byte[Variables.Sum(v => v.Variable.Size) + 2]);
+        var bytes = new byte[Variables.Count * 5 + 4];
+        bytes[0] = 1;
+        bytes[1] = 23;
+        var span = bytes.AsSpan();
+        for (var i = 0; i < Variables.Count; i++)
+        {
+            BitConverter.TryWriteBytes(span[(i * 5 + 2)..], Variables[i].Variable.Address);
+            span[i * 5 + 6] = Variables[i].Variable.Size;
+        }
+        BitConverter.TryWriteBytes(span[^2..], ModbusCRC16.CalculateCRC(span[..^2]));
+        protocol = null;
         await port.BaseStream.WriteAsync(bytes);
         Status = OscilloscopeStatus.Play;
     }
@@ -215,8 +293,7 @@ internal sealed partial class MainViewModel : ObservableObject
         if (port is null)
             return;
         Status = OscilloscopeStatus.Pause;
-        var bytes = new byte[10];
-        await port.BaseStream.WriteAsync(bytes);
+        await port.BaseStream.WriteAsync(stopBytes);
         pipe.Reader.CancelPendingRead();
     }
 
@@ -228,12 +305,30 @@ internal sealed partial class MainViewModel : ObservableObject
         if (port is null)
             return;
         Status = OscilloscopeStatus.Stop;
-        var bytes = new byte[10];
-        await port.BaseStream.WriteAsync(bytes);
+        await port.BaseStream.WriteAsync(stopBytes);
         pipe.Reader.CancelPendingRead();
     }
 
     private bool StopCanExecute() => Connected && Status != OscilloscopeStatus.Stop;
+
+    [RelayCommand(CanExecute = nameof(RunUserCommandCanExecute))]
+    private async Task RunUserCommandAsync(UserCommand command)
+    {
+        if (port is null)
+            return;
+        protocol = new(command.Length);
+        try
+        {
+            await port.BaseStream.WriteAsync(command.Send);
+            await protocol.Value;
+        }
+        finally
+        {
+            protocol = null;
+        }
+    }
+
+    private bool RunUserCommandCanExecute() => Connected && Status != OscilloscopeStatus.Play;
 
     [RelayCommand(CanExecute = nameof(VariableCanExecute))]
     private async Task SaveVariableAsync()

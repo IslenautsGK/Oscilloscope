@@ -13,5 +13,5 @@ internal sealed partial class VariableViewModel : ObservableObject
 
     [JsonIgnore]
     [ObservableProperty]
-    public partial double? CurValue { get; set; }
+    public partial double CurValue { get; set; } = double.NaN;
 }

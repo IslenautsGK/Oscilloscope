@@ -40,7 +40,7 @@ internal sealed class OscilloscopeStreamer
 
     public int Cycle { get; set; } = 2;
 
-    public Action<double?>? UpdateCurValue { private get; set; }
+    public Action<double>? UpdateCurValue { private get; set; }
 
     private double MaxX => (ys.Count - 1) * Cycle / 1000.0;
 
@@ -59,7 +59,7 @@ internal sealed class OscilloscopeStreamer
 
     public void UpdateAxisLimits(Plot plot)
     {
-        if (!ManageAxisLimits)
+        if (!ManageAxisLimits || ys.Count == 0)
             return;
         if (MaxX != Axes.XAxis.Max)
             Axes.XAxis.Range.Pan(MaxX - Axes.XAxis.Max);
@@ -98,7 +98,7 @@ internal sealed class OscilloscopeStreamer
         if (index >= 0 && index < ys.Count)
             UpdateCurValue?.Invoke(ys[index]);
         else
-            UpdateCurValue?.Invoke(null);
+            UpdateCurValue?.Invoke(double.NaN);
     }
 
     public bool FillData(Dictionary<string, double> dictionary, int index)

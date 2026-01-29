@@ -5,14 +5,14 @@ namespace Oscilloscope;
 internal readonly record struct VariableInfo(
     string? Name,
     string? Info,
-    ulong Address,
+    uint Address,
     TypeCode TypeCode,
     int BitOffset,
     int BitSize
 )
 {
     [JsonIgnore]
-    public int Size =>
+    public byte Size =>
         TypeCode switch
         {
             TypeCode.Boolean or TypeCode.SByte or TypeCode.Byte => 1,

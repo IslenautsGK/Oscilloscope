@@ -6,7 +6,7 @@ internal sealed class ExcelVariable
 
     public string? Info { get; set; }
 
-    public ulong Address { get; set; }
+    public uint Address { get; set; }
 
     public TypeCode TypeCode { get; set; }
 

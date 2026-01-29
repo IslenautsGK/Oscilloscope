@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using System.ComponentModel;
+using System.Globalization;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -20,6 +22,8 @@ public sealed partial class MainWindow
 {
     private readonly MainViewModel vm;
 
+    private bool saved;
+
     private bool clear = true;
 
     private readonly List<OscilloscopeStreamer> streamers = [];
@@ -36,10 +40,17 @@ public sealed partial class MainWindow
         WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
-    public void Autoscale(Plot plot)
+    private async void WindowClosing(object? sender, CancelEventArgs e)
     {
-        plot.Axes.AutoScale();
-        this.plot.Refresh();
+        if (saved)
+            return;
+        var task = vm.SaveAppStatusAsync();
+        if (task.IsCompleted)
+            return;
+        e.Cancel = true;
+        await task;
+        saved = true;
+        Close();
     }
 
     private void PlotMouseEnter(object? sender, MouseEventArgs e) =>
@@ -95,7 +106,11 @@ public sealed partial class MainWindow
     }
 
     void IRecipient<VariableColorMessage>.Receive(VariableColorMessage message) =>
-        message.Reply(Dialog.Show(new VariableColorPicker(message.Color)).GetResultAsync<string>());
+        message.Reply(
+            Dialog
+                .Show(new VariableColorPicker(message.Color), "DefaultDialogContainer")
+                .GetResultAsync<string>()
+        );
 
     void IRecipient<OscilloscopeMessage>.Receive(OscilloscopeMessage message)
     {
