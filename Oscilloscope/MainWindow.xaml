@@ -201,10 +201,12 @@
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="local:UserCommand">
+          <DataTemplate DataType="local:IUserCommand">
             <Button
               Content="{Binding Name}"
               Margin="5,5,0,0"
+              Background="{Binding Color}"
+              Foreground="{Binding FontColor}"
               Command="{Binding Data, Source={StaticResource RunUserCommandCommand}}"
               CommandParameter="{Binding}"
             />

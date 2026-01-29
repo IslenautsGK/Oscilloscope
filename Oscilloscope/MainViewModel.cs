@@ -83,7 +83,7 @@ internal sealed partial class MainViewModel : ObservableObject
     public partial double CurTime { get; set; }
 
     [ObservableProperty]
-    public partial IEnumerable<UserCommand> UserCommands { get; set; }
+    public partial IEnumerable<IUserCommand> UserCommands { get; set; }
 
     public ObservableCollection<VariableViewModel> Variables { get; } =
     [new() { Color = "#FF1F77B4" }];
@@ -120,7 +120,7 @@ internal sealed partial class MainViewModel : ObservableObject
         {
             await using var stream = File.OpenRead("user_commands.json");
             UserCommands =
-                await JsonSerializer.DeserializeAsync<IEnumerable<UserCommand>>(stream) ?? [];
+                await JsonSerializer.DeserializeAsync<IEnumerable<IUserCommand>>(stream) ?? [];
         }
     }
 
@@ -201,7 +201,7 @@ internal sealed partial class MainViewModel : ObservableObject
                 if (this.protocol is { } protocol)
                 {
                     if (protocol.HandleData(buffer))
-                        reader.AdvanceTo(buffer.GetPosition(protocol.Length));
+                        reader.AdvanceTo(buffer.End);
                     else
                         reader.AdvanceTo(buffer.Start, buffer.End);
                 }
@@ -270,14 +270,16 @@ internal sealed partial class MainViewModel : ObservableObject
         if (port is null)
             return;
         memory = new Memory<byte>(new byte[Variables.Sum(v => v.Variable.Size) + 2]);
-        var bytes = new byte[Variables.Count * 5 + 4];
+        var bytes = new byte[Variables.Count * 5 + 6];
         bytes[0] = 1;
         bytes[1] = 23;
+        bytes[2] = (byte)Variables.Count;
+        bytes[3] = (byte)Cycle;
         var span = bytes.AsSpan();
         for (var i = 0; i < Variables.Count; i++)
         {
-            BitConverter.TryWriteBytes(span[(i * 5 + 2)..], Variables[i].Variable.Address);
-            span[i * 5 + 6] = Variables[i].Variable.Size;
+            BitConverter.TryWriteBytes(span[(i * 5 + 4)..], Variables[i].Variable.Address);
+            span[i * 5 + 8] = Variables[i].Variable.Size;
         }
         BitConverter.TryWriteBytes(span[^2..], ModbusCRC16.CalculateCRC(span[..^2]));
         protocol = null;
@@ -312,15 +314,15 @@ internal sealed partial class MainViewModel : ObservableObject
     private bool StopCanExecute() => Connected && Status != OscilloscopeStatus.Stop;
 
     [RelayCommand(CanExecute = nameof(RunUserCommandCanExecute))]
-    private async Task RunUserCommandAsync(UserCommand command)
+    private async Task RunUserCommandAsync(IUserCommand command)
     {
         if (port is null)
             return;
         protocol = new(command.Length);
         try
         {
-            await port.BaseStream.WriteAsync(command.Send);
-            await protocol.Value;
+            await port.BaseStream.WriteAsync(await command.GetSendDataAsync());
+            await command.HandleDataAsync(await protocol.Value);
         }
         finally
         {

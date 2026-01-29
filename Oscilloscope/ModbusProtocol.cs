@@ -22,5 +22,6 @@ internal readonly record struct ModbusProtocol(int Length)
         return true;
     }
 
-    public TaskAwaiter<Memory<byte>> GetAwaiter() => tcs.Task.GetAwaiter();
+    public TaskAwaiter<Memory<byte>> GetAwaiter() =>
+        tcs.Task.WaitAsync(TimeSpan.FromSeconds(1)).GetAwaiter();
 }
