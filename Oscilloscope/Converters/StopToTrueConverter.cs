@@ -1,7 +1,8 @@
 ﻿using System.Globalization;
 using System.Windows.Data;
+using Oscilloscope.Models;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Converters;
 
 [ValueConversion(typeof(OscilloscopeStatus), typeof(bool))]
 internal sealed class StopToTrueConverter : IValueConverter

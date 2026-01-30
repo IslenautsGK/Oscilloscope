@@ -1,6 +1,8 @@
-﻿using Riok.Mapperly.Abstractions;
+﻿using Oscilloscope.Models;
+using Oscilloscope.ViewModels;
+using Riok.Mapperly.Abstractions;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Maps;
 
 [Mapper(RequiredMappingStrategy = RequiredMappingStrategy.None)]
 internal static partial class AppStatusRecordMap

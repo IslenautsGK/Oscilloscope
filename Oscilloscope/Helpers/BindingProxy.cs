@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Helpers;
 
 internal sealed class BindingProxy : Freezable
 {

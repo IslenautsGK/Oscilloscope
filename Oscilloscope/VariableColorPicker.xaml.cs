@@ -1,6 +1,7 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Media;
 using HandyControl.Data;
+using Oscilloscope.ViewModels;
 
 namespace Oscilloscope;
 

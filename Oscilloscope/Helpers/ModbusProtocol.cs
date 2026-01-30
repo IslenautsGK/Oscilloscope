@@ -1,7 +1,8 @@
 ﻿using System.Buffers;
 using System.Runtime.CompilerServices;
+using Oscilloscope;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Helpers;
 
 internal readonly record struct ModbusProtocol(int Length)
 {

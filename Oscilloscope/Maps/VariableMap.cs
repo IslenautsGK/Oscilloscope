@@ -1,6 +1,8 @@
-﻿using Riok.Mapperly.Abstractions;
+﻿using Oscilloscope.Models;
+using Oscilloscope.ViewModels;
+using Riok.Mapperly.Abstractions;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Maps;
 
 [Mapper]
 internal static partial class VariableMap
@@ -10,9 +12,15 @@ internal static partial class VariableMap
     public static partial ExcelVariable ToExcel(this VariableViewModel viewModel);
 
     [MapperIgnoreTarget(nameof(VariableInfo.Size))]
+    [MapperIgnoreSource(nameof(ExcelVariable.DisplayName))]
     [MapperIgnoreSource(nameof(ExcelVariable.Color))]
     public static partial VariableInfo ToInfo(this ExcelVariable variable);
 
     public static VariableViewModel ToViewModel(this ExcelVariable variable) =>
-        new() { Variable = variable.ToInfo(), Color = variable.Color };
+        new()
+        {
+            Variable = variable.ToInfo(),
+            DisplayName = variable.DisplayName,
+            Color = variable.Color,
+        };
 }

@@ -1,4 +1,4 @@
-﻿namespace Oscilloscope;
+﻿namespace Oscilloscope.Helpers;
 
 internal static class SpanExtenssions
 {

@@ -1,6 +1,6 @@
 ﻿using ScottPlot;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Helpers;
 
 internal sealed class OscilloscopeStreamer
     : IPlottable,

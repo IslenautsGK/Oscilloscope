@@ -1,4 +1,4 @@
-﻿namespace Oscilloscope;
+﻿namespace Oscilloscope.Models;
 
 internal enum OscilloscopeStatus
 {

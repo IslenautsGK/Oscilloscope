@@ -1,10 +1,8 @@
-﻿namespace Oscilloscope;
+﻿namespace Oscilloscope.Models;
 
 internal sealed class ExcelVariable
 {
-    public string? Name { get; set; }
-
-    public string? Info { get; set; }
+    public string Name { get; set; } = "";
 
     public uint Address { get; set; }
 
@@ -13,6 +11,8 @@ internal sealed class ExcelVariable
     public int BitOffset { get; set; }
 
     public int BitSize { get; set; }
+
+    public string? DisplayName { get; set; }
 
     public string Color { get; set; } = "#000000";
 }

@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
+using Oscilloscope.UserCommands;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Contracts;
 
 [JsonDerivedType(typeof(SimpleUserCommand), "Simple")]
 internal interface IUserCommand

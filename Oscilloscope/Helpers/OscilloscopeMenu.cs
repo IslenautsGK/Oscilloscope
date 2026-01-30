@@ -1,9 +1,11 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using Oscilloscope.Helpers;
+using Oscilloscope.ViewModels;
 using ScottPlot;
 using ScottPlot.WPF;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Helpers;
 
 internal sealed class OscilloscopeMenu(WpfPlotBase plotBase, MainViewModel vm) : IPlotMenu
 {

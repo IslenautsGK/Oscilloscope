@@ -1,11 +1,14 @@
 ﻿using System.ComponentModel;
 using System.Globalization;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using HandyControl.Tools.Extension;
 using Microsoft.Win32;
+using Oscilloscope.Helpers;
+using Oscilloscope.Messages;
+using Oscilloscope.Models;
+using Oscilloscope.ViewModels;
 using ScottPlot;
 using Dialog = HandyControl.Controls.Dialog;
 
@@ -15,6 +18,7 @@ public sealed partial class MainWindow
     : Window,
         IRecipient<SaveFileMessage>,
         IRecipient<OpenFileMessage>,
+        IRecipient<SelectVariableMessage>,
         IRecipient<VariableColorMessage>,
         IRecipient<OscilloscopeMessage>,
         IRecipient<RequestDataMessage>,
@@ -103,6 +107,15 @@ public sealed partial class MainWindow
             message.Reply(dialog.FileName);
         else
             message.Reply(null);
+    }
+
+    void IRecipient<SelectVariableMessage>.Receive(SelectVariableMessage message)
+    {
+        var content = new SelectVariable();
+        content.ViewModel.VariableTree = message.VariableTree;
+        message.Reply(
+            Dialog.Show(content, "DefaultDialogContainer").GetResultAsync<SelectVariableResult?>()
+        );
     }
 
     void IRecipient<VariableColorMessage>.Receive(VariableColorMessage message) =>

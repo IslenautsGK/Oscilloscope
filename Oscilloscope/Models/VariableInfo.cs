@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Models;
 
 internal readonly record struct VariableInfo(
-    string? Name,
-    string? Info,
+    string Name,
     uint Address,
     TypeCode TypeCode,
     int BitOffset,

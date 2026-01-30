@@ -5,6 +5,10 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:hc="https://handyorg.github.io/handycontrol"
   xmlns:local="clr-namespace:Oscilloscope"
+  xmlns:vc="clr-namespace:Oscilloscope.Converters"
+  xmlns:vm="clr-namespace:Oscilloscope.ViewModels"
+  xmlns:c="clr-namespace:Oscilloscope.Contracts"
+  xmlns:h="clr-namespace:Oscilloscope.Helpers"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
   xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
   xmlns:sys="clr-namespace:System;assembly=mscorlib"
@@ -12,7 +16,7 @@
   Title="示波器"
   Width="800"
   Height="450"
-  d:DataContext="{d:DesignInstance Type=local:MainViewModel}"
+  d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
   Closing="WindowClosing"
   hc:Dialog.Token="DefaultDialogContainer"
   mc:Ignorable="d"
@@ -23,13 +27,13 @@
     </i:EventTrigger>
   </i:Interaction.Triggers>
   <Window.Resources>
-    <local:BindingProxy x:Key="RunUserCommandCommand" Data="{Binding RunUserCommandCommand}" />
-    <local:BindingProxy x:Key="DeleteVariableCommand" Data="{Binding DeleteVariableCommand}" />
-    <local:BindingProxy
+    <h:BindingProxy x:Key="RunUserCommandCommand" Data="{Binding RunUserCommandCommand}" />
+    <h:BindingProxy x:Key="DeleteVariableCommand" Data="{Binding DeleteVariableCommand}" />
+    <h:BindingProxy
       x:Key="SelectVariableColorCommand"
       Data="{Binding SelectVariableColorCommand}"
     />
-    <local:BindingProxy x:Key="SelectVariableCommand" Data="{Binding SelectVariableCommand}" />
+    <h:BindingProxy x:Key="SelectVariableCommand" Data="{Binding SelectVariableCommand}" />
   </Window.Resources>
   <Grid ColumnDefinitions="3*,*">
     <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
@@ -159,7 +163,7 @@
         DockPanel.Dock="Top"
         SelectedIndex="0"
         SelectedItem="{Binding Cycle}"
-        IsEnabled="{Binding Status, Converter={x:Static local:StopToTrueConverter.Instance}}"
+        IsEnabled="{Binding Status, Converter={x:Static vc:StopToTrueConverter.Instance}}"
       >
         <ComboBox.ItemTemplate>
           <DataTemplate DataType="sys:Int32">
@@ -201,7 +205,7 @@
           </ItemsPanelTemplate>
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
-          <DataTemplate DataType="local:IUserCommand">
+          <DataTemplate DataType="c:IUserCommand">
             <Button
               Content="{Binding Name}"
               Margin="5,5,0,0"
@@ -240,6 +244,11 @@
       </Grid>
       <Border Margin="0,5" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
         <ScrollViewer>
+          <ScrollViewer.ContextMenu>
+            <ContextMenu>
+              <MenuItem Header="加载变量地址" Command="{Binding LoadVariableMapCommand}" />
+            </ContextMenu>
+          </ScrollViewer.ContextMenu>
           <ItemsControl
             Margin="5,0,5,5"
             HorizontalContentAlignment="Stretch"
@@ -252,7 +261,7 @@
                     HorizontalAlignment="Stretch"
                     Command="{Binding Data, Source={StaticResource SelectVariableCommand}}"
                     CommandParameter="{Binding}"
-                    Content="{Binding Variable.Name, TargetNullValue=选择变量}"
+                    Content="{Binding DisplayName, TargetNullValue=选择变量}"
                     Style="{StaticResource ButtonPrimary}"
                     ToolTip="选择变量"
                   />

@@ -9,8 +9,13 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using MiniExcelLibs;
 using MiniExcelLibs.OpenXml;
+using Oscilloscope.Contracts;
+using Oscilloscope.Helpers;
+using Oscilloscope.Maps;
+using Oscilloscope.Messages;
+using Oscilloscope.Models;
 
-namespace Oscilloscope;
+namespace Oscilloscope.ViewModels;
 
 internal sealed partial class MainViewModel : ObservableObject
 {
@@ -101,6 +106,8 @@ internal sealed partial class MainViewModel : ObservableObject
     private Task? readTask;
 
     private ModbusProtocol? protocol;
+
+    private List<VariableTreeNode>? variableTree;
 
     private Memory<byte> memory = Memory<byte>.Empty;
 
@@ -376,7 +383,54 @@ internal sealed partial class MainViewModel : ObservableObject
     private void DeleteVariable(VariableViewModel vm) => Variables.Remove(vm);
 
     [RelayCommand(CanExecute = nameof(VariableCanExecute))]
-    private void SelectVariable(VariableViewModel vm) { }
+    private async Task SelectVariableAsync(VariableViewModel vm)
+    {
+        if (variableTree is null)
+        {
+            await LoadVariableMapAsync();
+            if (variableTree is null)
+                return;
+        }
+        var result = await WeakReferenceMessenger.Default.Send(
+            new SelectVariableMessage(variableTree!)
+        );
+        if (result is null)
+            return;
+        vm.Variable = result.Variable;
+        vm.DisplayName = result.DisplayName;
+    }
+
+    [RelayCommand]
+    private async Task LoadVariableMapAsync()
+    {
+        var message = WeakReferenceMessenger.Default.Send(
+            new OpenFileMessage("加载变量映射表", "map|*.map")
+        );
+        if (message.Response is null || !File.Exists(message.Response))
+            return;
+        await using var stream = File.OpenRead(message.Response);
+        // TODO: 先写个测试
+        {
+            variableTree = [];
+            for (var i = 0U; i < 128; i++)
+                variableTree.Add(new(new($"int8-{i}", i, TypeCode.SByte, 0, 0)));
+            for (var i = 0U; i < 128; i++)
+                variableTree.Add(new(new($"uint8-{i}", i + 128, TypeCode.Byte, 0, 0)));
+            for (var i = 0U; i < 64; i++)
+                variableTree.Add(new(new($"uint16-{i}", i * 2 + 256, TypeCode.UInt16, 0, 0)));
+            for (var i = 0U; i < 32; i++)
+                variableTree.Add(new(new($"int32-{i}", i * 4 + 384, TypeCode.Int32, 0, 0)));
+            for (var i = 0U; i < 16; i++)
+                variableTree.Add(new(new($"int64-{i}", i * 8 + 512, TypeCode.Int64, 0, 0)));
+            for (var i = 0U; i < 16; i++)
+                variableTree.Add(new(new($"uint64-{i}", i * 8 + 640, TypeCode.UInt64, 0, 0)));
+            for (var i = 0U; i < 32; i++)
+                variableTree.Add(new(new($"float32-{i}", i * 4 + 768, TypeCode.Single, 0, 0)));
+            for (var i = 0U; i < 16; i++)
+                variableTree.Add(new(new($"float64-{i}", i * 8 + 896, TypeCode.Double, 0, 0)));
+        }
+        return;
+    }
 
     [RelayCommand(CanExecute = nameof(VariableCanExecute))]
     private async Task SelectVariableColorAsync(VariableViewModel vm) =>

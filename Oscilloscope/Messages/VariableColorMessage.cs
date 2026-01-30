@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.Messaging.Messages;
 
-namespace Oscilloscope;
+namespace Oscilloscope.Messages;
 
 internal sealed class VariableColorMessage(string color) : AsyncRequestMessage<string>
 {

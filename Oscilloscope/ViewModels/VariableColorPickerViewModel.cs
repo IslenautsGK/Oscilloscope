@@ -1,6 +1,6 @@
 ﻿using HandyControl.Tools.Extension;
 
-namespace Oscilloscope;
+namespace Oscilloscope.ViewModels;
 
 internal sealed partial class VariableColorPickerViewModel : IDialogResultable<string>
 {

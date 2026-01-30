@@ -1,4 +1,6 @@
-﻿namespace Oscilloscope;
+﻿using Oscilloscope.Contracts;
+
+namespace Oscilloscope.UserCommands;
 
 internal sealed record SimpleUserCommand(
     string Name,
