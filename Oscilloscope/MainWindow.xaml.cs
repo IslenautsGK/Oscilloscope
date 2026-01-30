@@ -18,6 +18,7 @@ public sealed partial class MainWindow
     : Window,
         IRecipient<SaveFileMessage>,
         IRecipient<OpenFileMessage>,
+        IRecipient<ConfirmMessage>,
         IRecipient<SelectVariableMessage>,
         IRecipient<VariableColorMessage>,
         IRecipient<OscilloscopeMessage>,
@@ -108,6 +109,13 @@ public sealed partial class MainWindow
         else
             message.Reply(null);
     }
+
+    void IRecipient<ConfirmMessage>.Receive(ConfirmMessage message) =>
+        message.Reply(
+            Dialog
+                .Show(new Confirm(message.Title, message.Message), "DefaultDialogContainer")
+                .GetResultAsync<bool>()
+        );
 
     void IRecipient<SelectVariableMessage>.Receive(SelectVariableMessage message)
     {

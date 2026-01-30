@@ -248,18 +248,19 @@ internal sealed partial class MainViewModel : ObservableObject
         }
         for (var i = 0; i < results.Length; i++)
         {
-            results[i] = Variables[i].Variable.TypeCode switch
+            var variable = Variables[i].Variable;
+            results[i] = variable.TypeCode switch
             {
                 TypeCode.Boolean => span.ReadBool() ? 1 : 0,
-                TypeCode.Char => span.ReadChar(),
-                TypeCode.SByte => span.ReadSByte(),
-                TypeCode.Byte => span.ReadByte(),
-                TypeCode.Int16 => span.ReadInt16(),
-                TypeCode.UInt16 => span.ReadUInt16(),
-                TypeCode.Int32 => span.ReadInt32(),
-                TypeCode.UInt32 => span.ReadUInt32(),
-                TypeCode.Int64 => span.ReadInt64(),
-                TypeCode.UInt64 => span.ReadUInt64(),
+                TypeCode.Char => span.ReadChar().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.SByte => span.ReadSByte().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.Byte => span.ReadByte().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.Int16 => span.ReadInt16().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.UInt16 => span.ReadUInt16().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.Int32 => span.ReadInt32().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.UInt32 => span.ReadUInt32().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.Int64 => span.ReadInt64().BitField(variable.BitOffset, variable.BitSize),
+                TypeCode.UInt64 => span.ReadUInt64().BitField(variable.BitOffset, variable.BitSize),
                 TypeCode.Single => span.ReadFloat32(),
                 TypeCode.Double => span.ReadFloat64(),
                 _ => span.ReadInt32(),
@@ -276,7 +277,29 @@ internal sealed partial class MainViewModel : ObservableObject
     {
         if (port is null)
             return;
-        memory = new Memory<byte>(new byte[Variables.Sum(v => v.Variable.Size) + 2]);
+        if (
+            Variables.Any(v => v.Variable.TypeCode == TypeCode.Empty)
+            && !await WeakReferenceMessenger.Default.Send(
+                new ConfirmMessage(
+                    "未选择变量",
+                    "有未选择的变量，默认按Int32格式读取0地址内存，是否仍要运行？"
+                )
+            )
+        )
+        {
+            return;
+        }
+        var len = Variables.Sum(v => v.Variable.Size) + 2;
+        if (
+            !CheckBandwidth(Cycle, len, BaudRate)
+            && !await WeakReferenceMessenger.Default.Send(
+                new ConfirmMessage("带宽不足", "现有带宽不足以支持当前变量监控，是否仍要运行？")
+            )
+        )
+        {
+            return;
+        }
+        memory = new Memory<byte>(new byte[len]);
         var bytes = new byte[Variables.Count * 5 + 6];
         bytes[0] = 1;
         bytes[1] = 23;
@@ -295,6 +318,9 @@ internal sealed partial class MainViewModel : ObservableObject
     }
 
     private bool PlayCanExecute() => Connected && Status != OscilloscopeStatus.Play;
+
+    private static bool CheckBandwidth(int intervalMs, int dataLength, int baudRate) =>
+        (dataLength * 10.0 * 1000 / baudRate) <= (intervalMs * 0.8);
 
     [RelayCommand(CanExecute = nameof(PauseCanExecute))]
     private async Task PauseAsync()
@@ -413,21 +439,21 @@ internal sealed partial class MainViewModel : ObservableObject
         {
             variableTree = [];
             for (var i = 0U; i < 128; i++)
-                variableTree.Add(new(new($"int8-{i}", i, TypeCode.SByte, 0, 0)));
+                variableTree.Add(new(new($"int8-{i}", i, TypeCode.SByte, 0, 0), []));
             for (var i = 0U; i < 128; i++)
-                variableTree.Add(new(new($"uint8-{i}", i + 128, TypeCode.Byte, 0, 0)));
+                variableTree.Add(new(new($"uint8-{i}", i + 128, TypeCode.Byte, 0, 0), []));
             for (var i = 0U; i < 64; i++)
-                variableTree.Add(new(new($"uint16-{i}", i * 2 + 256, TypeCode.UInt16, 0, 0)));
+                variableTree.Add(new(new($"uint16-{i}", i * 2 + 256, TypeCode.UInt16, 0, 0), []));
             for (var i = 0U; i < 32; i++)
-                variableTree.Add(new(new($"int32-{i}", i * 4 + 384, TypeCode.Int32, 0, 0)));
+                variableTree.Add(new(new($"int32-{i}", i * 4 + 384, TypeCode.Int32, 0, 0), []));
             for (var i = 0U; i < 16; i++)
-                variableTree.Add(new(new($"int64-{i}", i * 8 + 512, TypeCode.Int64, 0, 0)));
+                variableTree.Add(new(new($"int64-{i}", i * 8 + 512, TypeCode.Int64, 0, 0), []));
             for (var i = 0U; i < 16; i++)
-                variableTree.Add(new(new($"uint64-{i}", i * 8 + 640, TypeCode.UInt64, 0, 0)));
+                variableTree.Add(new(new($"uint64-{i}", i * 8 + 640, TypeCode.UInt64, 0, 0), []));
             for (var i = 0U; i < 32; i++)
-                variableTree.Add(new(new($"float32-{i}", i * 4 + 768, TypeCode.Single, 0, 0)));
+                variableTree.Add(new(new($"float32-{i}", i * 4 + 768, TypeCode.Single, 0, 0), []));
             for (var i = 0U; i < 16; i++)
-                variableTree.Add(new(new($"float64-{i}", i * 8 + 896, TypeCode.Double, 0, 0)));
+                variableTree.Add(new(new($"float64-{i}", i * 8 + 896, TypeCode.Double, 0, 0), []));
         }
         return;
     }

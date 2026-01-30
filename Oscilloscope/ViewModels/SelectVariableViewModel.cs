@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using HandyControl.Tools.Extension;
+using Oscilloscope.Helpers;
 using Oscilloscope.Models;
 
 namespace Oscilloscope.ViewModels;
@@ -17,11 +18,23 @@ internal sealed partial class SelectVariableViewModel
     public partial List<VariableTreeNode>? VariableTree { get; set; }
 
     [ObservableProperty]
+    public partial List<VariableTreeNode>? FilteredVariableTree { get; set; }
+
+    [ObservableProperty]
+    public partial string Name { get; set; }
+
+    [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(OkCommand))]
     public partial VariableTreeNode? SelectedVariable { get; set; }
 
     [ObservableProperty]
     public partial string DisplayName { get; set; } = "";
+
+    partial void OnVariableTreeChanged(List<VariableTreeNode>? value) =>
+        FilteredVariableTree = value;
+
+    [RelayCommand]
+    private void Filter() => FilteredVariableTree = VariableTree?.Filter(Name);
 
     [RelayCommand(CanExecute = nameof(OkCanExecute))]
     private void Ok()

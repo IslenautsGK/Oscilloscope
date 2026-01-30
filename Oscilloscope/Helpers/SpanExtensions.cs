@@ -1,6 +1,6 @@
 ﻿namespace Oscilloscope.Helpers;
 
-internal static class SpanExtenssions
+internal static class SpanExtensions
 {
     extension(ref ReadOnlySpan<byte> span)
     {

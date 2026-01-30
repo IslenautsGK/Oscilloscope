@@ -6,6 +6,7 @@
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:local="clr-namespace:Oscilloscope"
   xmlns:vm="clr-namespace:Oscilloscope.ViewModels"
+  xmlns:hc="https://handyorg.github.io/handycontrol"
   d:DataContext="{d:DesignInstance Type=vm:SelectVariableViewModel}"
   mc:Ignorable="d"
   MinWidth="400"
@@ -19,7 +20,17 @@
     Margin="20"
   >
     <DockPanel>
-      <DockPanel DockPanel.Dock="Bottom" Margin="0,10,0,0">
+      <DockPanel DockPanel.Dock="Top">
+        <Button
+          Margin="10,0,0,0"
+          DockPanel.Dock="Right"
+          Style="{StaticResource ButtonInfo}"
+          hc:IconElement.Geometry="{StaticResource SearchGeometry}"
+          Command="{Binding FilterCommand}"
+        />
+        <TextBox Text="{Binding Name}" />
+      </DockPanel>
+      <DockPanel DockPanel.Dock="Bottom">
         <Button
           Style="{StaticResource ButtonPrimary}"
           DockPanel.Dock="Right"
@@ -36,7 +47,8 @@
         <TextBox Text="{Binding DisplayName}" />
       </DockPanel>
       <TreeView
-        ItemsSource="{Binding VariableTree}"
+        Margin="0,10"
+        ItemsSource="{Binding FilteredVariableTree}"
         SelectedItemChanged="TreeViewSelectedItemChanged"
       >
         <TreeView.ItemTemplate>

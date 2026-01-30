@@ -2,7 +2,7 @@
 
 namespace Oscilloscope.ViewModels;
 
-internal sealed partial class VariableColorPickerViewModel : IDialogResultable<string>
+internal sealed class VariableColorPickerViewModel : IDialogResultable<string>
 {
     public required string Result { get; set; }
 

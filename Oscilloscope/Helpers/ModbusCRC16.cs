@@ -1,6 +1,4 @@
-﻿using Oscilloscope;
-
-namespace Oscilloscope.Helpers;
+﻿namespace Oscilloscope.Helpers;
 
 internal static class ModbusCRC16
 {
