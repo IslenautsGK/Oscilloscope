@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using Oscilloscope.Helpers;
+using System.Windows.Controls.Primitives;
 using Oscilloscope.ViewModels;
 using ScottPlot;
 using ScottPlot.WPF;
@@ -9,6 +9,8 @@ namespace Oscilloscope.Helpers;
 
 internal sealed class OscilloscopeMenu(WpfPlotBase plotBase, MainViewModel vm) : IPlotMenu
 {
+    public List<ContextMenuItem> ContextMenuItems { get; } = [];
+
     public void ShowContextMenu(Pixel pixel)
     {
         var plot = plotBase.GetPlotAtPixel(pixel);
@@ -22,7 +24,7 @@ internal sealed class OscilloscopeMenu(WpfPlotBase plotBase, MainViewModel vm) :
         autoscale.Click += Autoscale;
         menu.Items.Add(autoscale);
         menu.PlacementTarget = plotBase;
-        menu.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint;
+        menu.Placement = PlacementMode.MousePoint;
         menu.IsOpen = true;
     }
 
